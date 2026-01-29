@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>COVID-19 Rates in the US</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
+
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Open Sans', sans-serif; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    #title {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-top: 20px;
+      margin-left: 20px;
+      font-size: 25pt;
+      color: white;
+    }
+    #subtitle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin-top: 70px;
+      margin-left: 20px;
+      font-size: 15pt;
+      color: white;
+    }
+
+    #legend {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 190px;
+      background: #fff;
+      margin-right: 20px;
+      margin-bottom: 40px;
+      padding: 10px 20px 10px 10px;
+      border-radius: 3px;
+      text-align: left;
+      font-size: 11pt;
+    }
+
+    .break { margin: 4px 0; }
+    .swatch {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 8px;
+      vertical-align: middle;
+      border: 1px solid #ddd;
+    }
+
+    a { color: black; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+  <div id="legend"></div>
+
+  <div id="title">COVID-19 Rates in the US</div>
+  <div id="subtitle">2020 (cases per 1,000 residents)</div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmF5bjN0IiwiYSI6ImNta3oyanF4NDBkeXgzZW9mbnh6bTRybjAifQ.DHfkVD4pDgGo2F7LpW2-jw';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v10',
+      center: [-98, 39],
+      zoom: 3.6
+    });
+
+    // Your property name is "rates" (plural)
+    const breaks = [10, 25, 50, 75, 100];
+    const colors = [
+      '#edf8fb', // < 10
+      '#ccece6', // 10–25
+      '#99d8c9', // 25–50
+      '#66c2a4', // 50–75
+      '#2ca25f', // 75–100
+      '#006d2c'  // >= 100
+    ];
+
+    map.on('load', () => {
+      map.addSource('covid-rates', {
+        type: 'geojson',
+        data: 'assets/us-covid-2020-rates.json'
+      });
+
+      // Reliable choropleth using an expression (step)
+      map.addLayer({
+        id: 'covid-rates-fill',
+        type: 'fill',
+        source: 'covid-rates',
+        paint: {
+          'fill-color': [
+            'step',
+            ['to-number', ['get', 'rates']],
+            colors[0],
+            breaks[0], colors[1],
+            breaks[1], colors[2],
+            breaks[2], colors[3],
+            breaks[3], colors[4],
+            breaks[4], colors[5]
+          ],
+          'fill-opacity': 0.72,
+          'fill-outline-color': 'rgba(255,255,255,0.35)'
+        }
+      });
+
+      // Popup
+      map.on('click', 'covid-rates-fill', (e) => {
+        const p = e.features[0].properties;
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(
+            `<strong>County:</strong> ${p.county}<br>` +
+            `<strong>State:</strong> ${p.state}<br>` +
+            `<strong>Cases:</strong> ${p.cases}<br>` +
+            `<strong>Deaths:</strong> ${p.deaths}<br>` +
+            `<strong>Rate (per 1,000):</strong> ${p.rates}`
+          )
+          .addTo(map);
+      });
+
+      map.on('mouseenter', 'covid-rates-fill', () => map.getCanvas().style.cursor = 'pointer');
+      map.on('mouseleave', 'covid-rates-fill', () => map.getCanvas().style.cursor = '');
+
+      // Legend
+      const legend = document.getElementById('legend');
+      let html = '<strong>Rate (per 1,000)</strong>';
+
+      html += `<div class="break"><span class="swatch" style="background:${colors[0]}"></span>&lt; ${breaks[0]}</div>`;
+      html += `<div class="break"><span class="swatch" style="background:${colors[1]}"></span>${breaks[0]}–${breaks[1]}</div>`;
+      html += `<div class="break"><span class="swatch" style="background:${colors[2]}"></span>${breaks[1]}–${breaks[2]}</div>`;
+      html += `<div class="break"><span class="swatch" style="background:${colors[3]}"></span>${breaks[2]}–${breaks[3]}</div>`;
+      html += `<div class="break"><span class="swatch" style="background:${colors[4]}"></span>${breaks[3]}–${breaks[4]}</div>`;
+      html += `<div class="break"><span class="swatch" style="background:${colors[5]}"></span>&ge; ${breaks[4]}</div>`;
+
+      html += '<p style="text-align:right; font-size:10pt; margin-top:8px;">Data: NYT + ACS (processed)</p>';
+
+      legend.innerHTML = html;
+    });
+  </script>
+</body>
+</html>
