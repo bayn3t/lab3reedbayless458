@@ -9,11 +9,12 @@ thematic web mapping techniques using Mapbox GL JS.
 ## Maps
 - **Choropleth Map – COVID-19 Rates**  
   Displays county-level COVID-19 case rates (cases per 1,000 residents).  
-  Link:
+  Link: https://bayn3t.github.io/lab3reedbayless458/map1.html
+
 
 - **Proportional Symbol Map – COVID-19 Cases**  
   Displays total COVID-19 case counts using proportional symbols.  
-  Link:
+  Link: https://bayn3t.github.io/lab3reedbayless458/map2.html
 
 ## Methods
 - COVID-19 case and death data were obtained from *The New York Times*.
